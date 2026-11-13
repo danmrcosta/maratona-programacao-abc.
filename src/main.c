@@ -7,7 +7,7 @@ typedef struct {
   int resolvidos; // quantidade de problemas resolvdos
   int minutos; // tempo total de submissao em minutos
   int qnt_submissoes; // quantidade total de submissões
-}DESEMPENHO;
+} DESEMPENHO;
 
 
 typedef struct{
