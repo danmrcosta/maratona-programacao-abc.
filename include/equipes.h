@@ -18,5 +18,7 @@ typedef struct{
 
 void validar_nomes(EQUIPES *equipe);
 
+int buscar_equipe(EQUIPES equipes[], int quantidade, char nome[]); // realiza a busca da equipe, e retorna o indice
+
 #endif
 

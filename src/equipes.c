@@ -1,5 +1,6 @@
 
 #include <stdio.h>
+#include <string.h>
 
 #include "equipes.h"
 #include "validacao.h"
@@ -41,5 +42,19 @@ void validar_nomes(EQUIPES *equipe){
 
     printf("Integrante %d cadastrado com sucesso!\n", i + 1);
   }
+}
+
+int buscar_equipe(EQUIPES equipes[], int quantidade, char nome[]){
+
+  for(int i = 0; i < quantidade; i++){
+
+    if(strcmp(equipes[i].nome_equipe, nome) == 0){
+      return i;
+    }
+
+  }
+
+  return -1;
+
 }
 
