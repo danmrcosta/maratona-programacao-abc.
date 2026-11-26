@@ -94,7 +94,6 @@ void cadastro(EQUIPES *equipe){
       printf("Nome da equipe deve ter 1 a 50 caracteres!\n");                         // ...avisa o usuario do erro
   } while(!nome_equipe_instituicao_valido(equipe->nome_equipe));                      // volta a pedir enquanto estiver invalido
 
-  printf("Equipe %s cadastrada com sucesso!\n", equipe->nome_equipe);                 // confirma o cadastro da equipe
 
   // 2. Valida INSTITUICAO
   do{                                          // repete ate a instituicao ser valida
@@ -105,7 +104,6 @@ void cadastro(EQUIPES *equipe){
       printf("Instituicao deve ter 1 a 50 caracteres!\n");                            // ...mostra a mensagem de erro
   } while(!nome_equipe_instituicao_valido(equipe->instituicao_origem));               // repete enquanto estiver invalida
 
-  printf("Instituicao %s cadastrada com sucesso!\n", equipe->instituicao_origem);     // confirma o cadastro da instituicao
 
   // 3. Valida os 3 INTEGRANTES
   for(int i = 0; i < 3; i++){                  // repete o processo para cada um dos 3 integrantes
@@ -119,8 +117,10 @@ void cadastro(EQUIPES *equipe){
 
     } while(!nome_pessoa_valido(equipe->nome_integrantes[i]));                        // repete enquanto estiver invalido
 
-    printf("Integrante %d cadastrado com sucesso!\n", i + 1);                         // confirma o cadastro do integrante
   }
+
+  printf("Equipe %s cadastrada com sucesso!\n", equipe->nome_equipe);                 // confirma o cadastro da equipe
+
 }
 
 // Procura uma equipe pelo nome e devolve a posicao dela no vetor (ou -1 se nao existir)
