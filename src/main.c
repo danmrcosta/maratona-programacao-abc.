@@ -27,13 +27,15 @@ void limpar_nova_linha(char *s);                        // remove o '\n' que o f
 int nome_pessoa_valido(char *nome);                     // valida o nome de um integrante
 int nome_equipe_instituicao_valido(char *nome);         // valida nome da equipe ou da instituicao
 
-void validar_nomes(EQUIPES *equipe);                    // le e valida todos os dados de cadastro da equipe
+void cadastro(EQUIPES *equipe);                    // le e valida todos os dados de cadastro da equipe
 int buscar_equipe(EQUIPES equipes[], int quantidade, char nome[]); // procura a equipe pelo nome e devolve o indice
 void inicializar_equipe(EQUIPES *equipe);  // zera o desempenho da equipe nos 14 problemas
 
 int veredito_valido(char *veredito); // valida os vereditos (as siglas)
 void registrar_submissao(EQUIPES *equipe, char problema, int tempo, char veredito[]); // registra uma submissao
 void realizar_submissao(EQUIPES *equipe, int quantidade);                             // le os dados de uma submissao
+                                                                                      //
+void menu(EQUIPES equipes[], int *quantidade);
 
 // ============================================================
 // validacao.c
@@ -241,6 +243,62 @@ void registrar_submissao(EQUIPES *equipe, char problema, int tempo, char veredit
 
 }
 
+void menu(EQUIPES equipes[], int *quantidade){
+
+    int opcao;
+
+    do{
+        printf("\n===== MARATONA DE PROGRAMACAO =====\n");
+        printf("1. Cadastro de Equipe.\n");
+        printf("2. Busca por Instituicao.\n");
+        printf("3. Registro de Submissao.\n");
+        printf("4. Apresentacao do Placar Atual.\n");
+        printf("0. Sair.\n");
+
+        printf("Escolha: ");
+        scanf("%d", &opcao);
+        getchar();
+
+        switch(opcao){
+
+            case 1:
+                if(*quantidade < 5000){
+                    inicializar_equipe(&equipes[*quantidade]);
+                    cadastro(&equipes[*quantidade]);
+                    (*quantidade)++;
+                } else {
+                    printf("Limite de equipes atingido.\n");
+                }
+                break;
+
+            case 2:
+                printf("Busca por instituicao.\n");
+                break;
+
+            case 3:
+                if(*quantidade == 0){
+                    printf("Nenhuma equipe cadastrada!\n");
+                } else {
+                    realizar_submissao(equipes, *quantidade);
+                }
+                break;
+
+            case 4:
+                printf("Apresentacao do placar.\n");
+                break;
+
+            case 0:
+                printf("Encerrando.\n");
+                break;
+
+            default:
+                printf("Opcao invalida!\n");
+                break;
+        }
+
+    } while(opcao != 0);
+}
+
 // ============================================================
 // main.c
 // ============================================================
@@ -248,49 +306,8 @@ void registrar_submissao(EQUIPES *equipe, char problema, int tempo, char veredit
 int main(){
     EQUIPES equipes[5000];  // vetor com ate 5000 equipes
     int quantidade = 0;     // quantas equipes ja foram cadastradas
-    int x;                  // opcao escolhida no menu
-
-    do{
-        printf("Escolha uma opção:\n");
-        printf("1. Cadastro de Equipe.\n");
-        printf("2. Busca por Instituição.\n");
-        printf("3. Registro de Submissão.\n");
-        printf("4. Apresentação do Placar Atual.\n");
-        printf("0. Sair.\n");
-        scanf("%d", &x);
-        getchar();  // descarta o '\n' que o scanf deixou, para nao atrapalhar os fgets das outras funcoes
-
-        switch (x){
-            case 1:
-                if(quantidade < 5000){
-                    inicializar_equipe(&equipes[quantidade]);  // zera o desempenho da nova equipe
-                    cadastro(&equipes[quantidade]);            // le e valida os dados dela
-                    quantidade++;                              // agora ha uma equipe a mais
-                } else {
-                    printf("Limite de 5000 equipes atingido.\n");
-                }
-                break;
-            case 2:
-                printf("Opção: 2\n");
-                break;
-            case 3:
-                if(quantidade == 0){
-                    printf("Nenhuma equipe cadastrada ainda!\n");  // sem equipes, a busca pelo nome nunca terminaria
-                } else {
-                    realizar_submissao(equipes, quantidade);
-                }
-                break;
-            case 4:
-                printf("Opção: 4\n");
-                break;
-            case 0:
-                printf("Encerrando.\n");
-                break;
-            default:
-                printf("Opção inválida, escolha uma das opções do menu.\n \n");
-                continue;
-        }
-    } while(x != 0);
+    
+    menu(equipes, &quantidade);
 
     return 0;
 }
