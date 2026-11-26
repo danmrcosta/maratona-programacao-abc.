@@ -29,7 +29,9 @@ int nome_equipe_instituicao_valido(char *nome);         // valida nome da equipe
 
 void validar_nomes(EQUIPES *equipe);                    // le e valida todos os dados de cadastro da equipe
 int buscar_equipe(EQUIPES equipes[], int quantidade, char nome[]); // procura a equipe pelo nome e devolve o indice
+void inicializar_equipe(EQUIPES *equipe);  // zera o desempenho da equipe nos 14 problemas
 
+int veredito_valido(char *veredito); // valida os vereditos (as siglas)
 void registrar_submissao(EQUIPES *equipe, char problema, int tempo, char veredito[]); // registra uma submissao
 void realizar_submissao(EQUIPES *equipe, int quantidade);                             // le os dados de uma submissao
 
@@ -82,7 +84,7 @@ int nome_equipe_instituicao_valido(char *nome){
 // ============================================================
 
 // Le e valida nome da equipe, instituicao e os 3 integrantes
-void validar_nomes(EQUIPES *equipe){
+void cadastro(EQUIPES *equipe){
   // 1. Valida EQUIPE
   do{                                          // repete ate o usuario digitar um nome valido
     printf("Digite o nome da equipe (max 50 caracteres):\n");                         // pede o nome da equipe
@@ -136,18 +138,40 @@ int buscar_equipe(EQUIPES equipes[], int quantidade, char nome[]){
 
 }
 
+// Coloca zero em todos os campos de desempenho da equipe
+void inicializar_equipe(EQUIPES *equipe){
+
+  for(int i = 0; i < 14; i++){                 // percorre os 14 problemas (posicao 0 = A ate posicao 13 = N)
+    equipe->problemas[i].resolvidos = 0;       // 0 = sem problema ainda 
+    equipe->problemas[i].minutos = 0;          // nenhum tempo ainda
+    equipe->problemas[i].qnt_submissoes = 0;   // nenhuma submissao ainda
+  }
+
+}
+
+
 // ============================================================
 // submissao.c
 // ============================================================
 
 // Le da entrada os dados de uma submissao e chama o registro
+//
+
+// devolve 1 se o veredito for uma das 5 siglas permitidas, e 0 caso contrario
+int veredito_valido(char *veredito){
+  return (strcmp(veredito, "AC") == 0 || strcmp(veredito, "PE") == 0 ||
+          strcmp(veredito, "MLE") == 0 || strcmp(veredito, "TLE") == 0 ||
+          strcmp(veredito, "WA") == 0);
+}
+
+//
 void realizar_submissao(EQUIPES equipes[], int quantidade) {
 
     char nome[51];     // armazenar o nome da equipe digitado
-    int indice;        // variavel usada para a condicao (posicao da equipe no vetor)
-    char problema;     // guardar o caractere do problema
-    int tempo;         // guardar o tempo de cada problema
-    char veredito[5];  // guardar os conceitos e +1 para o caractere nulo (pois sao 4)
+    int indice;        // posicao da equipe no vetor
+    char problema;     // guardar a letra do problema
+    int tempo;         // guardar o tempo da submissao
+    char veredito[100]; // guardar o veredito (tamanho folgado para uma digitacao errada nao sobrar no teclado)
 
     // Procura equipe
     do {                                                   // repete ate encontrar uma equipe existente
@@ -166,22 +190,36 @@ void realizar_submissao(EQUIPES equipes[], int quantidade) {
 
     printf("Equipe encontrada!\n");                        // confirma que a equipe existe
 
-    // Ler problema
-    printf("Digite o problema (A ate N):\n");              // pede a letra do problema
-    scanf(" %c", &problema);                               // le um caractere (o espaco antes do %c ignora espacos e quebras de linha)
+    // ta lendo o  problema (so aceita de A ate N)
+    do {
+        printf("Digite o problema (A ate N):\n");          // pede a letra do problema
+        scanf(" %c", &problema);                           // le um caractere (o espaco antes do %c ignora espacos e quebras de linha)
+        if (problema < 'A' || problema > 'N') {            // se estiver fora do intervalo...
+            printf("Problema invalido!\n");                // ...avisa e pede de novo
+        }
+    } while (problema < 'A' || problema > 'N');            // repete enquanto for invalido
 
-    // Ler tempo
-    printf("Digite o tempo:\n");                           // pede o tempo da submissao
-    scanf("%d", &tempo);                                   // le o tempo como numero inteiro
+    // Ler tempo (nao pode ser negativo)
+    do {
+        printf("Digite o tempo:\n");                       // pede o tempo da submissao
+        scanf("%d", &tempo);                               // le o tempo como numero inteiro
+        if (tempo < 0) {                                   // tempo negativo nao entra
+            printf("Tempo invalido!\n");                   // ...avisa e pede de novo
+        }
+    } while (tempo < 0);                                   // repete enquanto for invalido
 
     // Consumir/limpar o enter deixado pelo scanf
     getchar();                                             // descarta o '\n' que sobrou, para nao atrapalhar o proximo fgets
 
-    // Ler veredito
-    printf("Digite o veredito (AC, PE, MLE, TLE ou WA):\n"); // pede o resultado da submissao
-    fgets(veredito, sizeof(veredito), stdin);              // le o veredito (ate 4 caracteres)
-
-    limpar_nova_linha(veredito);                           // tira o '\n' do final
+    // Ler veredito (AC, PE, MLE, TLE ou WA)
+    do {
+        printf("Digite o veredito (AC, PE, MLE, TLE ou WA):\n"); // pede o resultado da submissao
+        fgets(veredito, sizeof(veredito), stdin);          // le a linha digitada
+        limpar_nova_linha(veredito);                       // tira o '\n' do final
+        if (!veredito_valido(veredito)) {                  // se nao for uma das 5 siglas...
+            printf("Veredito invalido!\n");                // ...avisa e pede de novo
+        }
+    } while (!veredito_valido(veredito));                  // repete enquanto for invalido
 
     // Registrar submissao
     registrar_submissao(&equipes[indice], problema, tempo, veredito); // envia os dados para a equipe encontrada
@@ -190,9 +228,16 @@ void realizar_submissao(EQUIPES equipes[], int quantidade) {
 // Registra a submissao no desempenho da equipe
 void registrar_submissao(EQUIPES *equipe, char problema, int tempo, char veredito[]) {
 
-    // Você implementará a lógica de atualização aqui.
-    // (funcao ainda vazia: por enquanto nao altera nada na equipe)
+    int posicao = problema - 'A'; // A vira 0, B vira 1, n vira 13
 
+    if(equipe->problemas[posicao].resolvidos == 1) return; // se ja foi resolvido, ignora a submissao
+
+    equipe->problemas[posicao].qnt_submissoes++; // como chegou aqui o problema nao foi resolvido: conta +1
+
+    if(strcmp(veredito, "AC") == 0 || strcmp(veredito, "PE") == 0){ // AC e PE sao os aceitos
+      equipe->problemas[posicao].resolvidos = 1;  // marca o problema como resolvido (1 = sim)
+      equipe->problemas[posicao].minutos = tempo; // guarda o tempo em que foi resolvido
+    }
 
 }
 
@@ -201,13 +246,51 @@ void registrar_submissao(EQUIPES *equipe, char problema, int tempo, char veredit
 // ============================================================
 
 int main(){
-  EQUIPES equipe;                              // cria uma variavel para guardar os dados de uma equipe
-  validar_nomes(&equipe);                      // le e valida os dados (passa o endereco para a funcao preencher a variavel)
+    EQUIPES equipes[5000];  // vetor com ate 5000 equipes
+    int quantidade = 0;     // quantas equipes ja foram cadastradas
+    int x;                  // opcao escolhida no menu
 
-    printf("Equipe %s\n",equipe.nome_equipe);                  // mostra o nome da equipe cadastrada
-    printf("Instituicao origem %s\n",equipe.instituicao_origem); // mostra a instituicao cadastrada
-  for(int i = 0; i < 3; i++){                  // percorre os 3 integrantes
-    printf("Integrante %d: %s\n", i,equipe.nome_integrantes[i]); // mostra o numero (comecando em 0) e o nome de cada integrante
-  }
-  return 0;                                    // encerra o programa indicando que terminou sem erros
+    do{
+        printf("Escolha uma opção:\n");
+        printf("1. Cadastro de Equipe.\n");
+        printf("2. Busca por Instituição.\n");
+        printf("3. Registro de Submissão.\n");
+        printf("4. Apresentação do Placar Atual.\n");
+        printf("0. Sair.\n");
+        scanf("%d", &x);
+        getchar();  // descarta o '\n' que o scanf deixou, para nao atrapalhar os fgets das outras funcoes
+
+        switch (x){
+            case 1:
+                if(quantidade < 5000){
+                    inicializar_equipe(&equipes[quantidade]);  // zera o desempenho da nova equipe
+                    cadastro(&equipes[quantidade]);            // le e valida os dados dela
+                    quantidade++;                              // agora ha uma equipe a mais
+                } else {
+                    printf("Limite de 5000 equipes atingido.\n");
+                }
+                break;
+            case 2:
+                printf("Opção: 2\n");
+                break;
+            case 3:
+                if(quantidade == 0){
+                    printf("Nenhuma equipe cadastrada ainda!\n");  // sem equipes, a busca pelo nome nunca terminaria
+                } else {
+                    realizar_submissao(equipes, quantidade);
+                }
+                break;
+            case 4:
+                printf("Opção: 4\n");
+                break;
+            case 0:
+                printf("Encerrando.\n");
+                break;
+            default:
+                printf("Opção inválida, escolha uma das opções do menu.\n \n");
+                continue;
+        }
+    } while(x != 0);
+
+    return 0;
 }
