@@ -1,9 +1,8 @@
+#include <stdio.h>   
+#include <string.h>  
+#include <ctype.h>   
 
-#include <stdio.h>   // printf, scanf, fgets, getchar
-#include <string.h>  // strlen, strcmp
-#include <ctype.h>   // isalpha (verifica se o caractere e uma letra)
 
-// ---------- Estruturas de dados (antes em equipes.h) ----------
 
 // Guarda o desempenho de uma equipe em UM problema
 typedef struct {
@@ -20,26 +19,23 @@ typedef struct{
   DESEMPENHO problemas[14];      // um desempenho para cada problema, de A ate N (14 problemas)
 } EQUIPES;
 
-// ---------- Prototipos das funcoes (antes nos .h) ----------
+
 // Avisam o compilador que as funcoes existem, para poderem ser usadas antes de definidas
 
 void limpar_nova_linha(char *s);                        // remove o '\n' que o fgets deixa na string
 int nome_pessoa_valido(char *nome);                     // valida o nome de um integrante
 int nome_equipe_instituicao_valido(char *nome);         // valida nome da equipe ou da instituicao
 
-void cadastro(EQUIPES *equipe);                    // le e valida todos os dados de cadastro da equipe
+void cadastro_equipe(EQUIPES equipes[], int *quantidade);   // le e valida todos os dados de cadastro da equipe
 int buscar_equipe(EQUIPES equipes[], int quantidade, char nome[]); // procura a equipe pelo nome e devolve o indice
-void inicializar_equipe(EQUIPES *equipe);  // zera o desempenho da equipe nos 14 problemas
 
-int veredito_valido(char *veredito); // valida os vereditos (as siglas)
 void registrar_submissao(EQUIPES *equipe, char problema, int tempo, char veredito[]); // registra uma submissao
-void realizar_submissao(EQUIPES *equipe, int quantidade);                             // le os dados de uma submissao
-                                                                                      //
-void menu(EQUIPES equipes[], int *quantidade);
+void realizar_submissao(EQUIPES equipes[], int quantidade);                         // le os dados de uma submissao
 
-// ============================================================
-// validacao.c
-// ============================================================
+void menu(EQUIPES equipes[], int *quantidade); // menu
+
+
+void ordem_alfabetica( EQUIPES equipes[], int tamanho ); //organizando em ordem alfabetica literalmente
 
 // Remove o '\n' que o fgets guarda no final da string lida
 void limpar_nova_linha(char *s){
@@ -81,12 +77,9 @@ int nome_equipe_instituicao_valido(char *nome){
   return (tamanho >= 1 && tamanho <= 50);      // valido se tiver entre 1 e 50 caracteres
 }
 
-// ============================================================
-// equipes.c
-// ============================================================
-
 // Le e valida nome da equipe, instituicao e os 3 integrantes
-void cadastro(EQUIPES *equipe){
+void dados_equipe(EQUIPES *equipe){
+
   // 1. Valida EQUIPE
   do{                                          // repete ate o usuario digitar um nome valido
     printf("Digite o nome da equipe (max 50 caracteres):\n");                         // pede o nome da equipe
@@ -96,6 +89,7 @@ void cadastro(EQUIPES *equipe){
       printf("Nome da equipe deve ter 1 a 50 caracteres!\n");                         // ...avisa o usuario do erro
   } while(!nome_equipe_instituicao_valido(equipe->nome_equipe));                      // volta a pedir enquanto estiver invalido
 
+  printf("Equipe %s cadastrada com sucesso!\n", equipe->nome_equipe);                 // confirma o cadastro da equipe
 
   // 2. Valida INSTITUICAO
   do{                                          // repete ate a instituicao ser valida
@@ -106,6 +100,7 @@ void cadastro(EQUIPES *equipe){
       printf("Instituicao deve ter 1 a 50 caracteres!\n");                            // ...mostra a mensagem de erro
   } while(!nome_equipe_instituicao_valido(equipe->instituicao_origem));               // repete enquanto estiver invalida
 
+  printf("Instituicao %s cadastrada com sucesso!\n", equipe->instituicao_origem);     // confirma o cadastro da instituicao
 
   // 3. Valida os 3 INTEGRANTES
   for(int i = 0; i < 3; i++){                  // repete o processo para cada um dos 3 integrantes
@@ -119,11 +114,72 @@ void cadastro(EQUIPES *equipe){
 
     } while(!nome_pessoa_valido(equipe->nome_integrantes[i]));                        // repete enquanto estiver invalido
 
+    printf("Integrante %d cadastrado com sucesso!\n", i + 1);                         // confirma o cadastro do integrante
+  }
+}
+
+void cadastro_equipe(EQUIPES equipes[], int *quantidade){
+
+  EQUIPES nova_equipe;                          // cria uma variavel para guardar os dados da nova equipe
+  dados_equipe(&nova_equipe);                   // le e valida os dados da nova equipe
+  int indice = buscar_equipe(equipes, *quantidade, nova_equipe.nome_equipe); // procura se a equipe ja existe
+
+  if(indice != -1){                              // se encontrou a equipe (indice diferente de -1)...
+    char resposta[10];
+
+    printf("Essa equipe ja existe.\n");
+    printf("Deseja atualizar seus dados? (S/N): ");
+    fgets(resposta, sizeof(resposta), stdin);
+    limpar_nova_linha(resposta);
+
+    if(strcmp(resposta, "S") == 0 || strcmp(resposta, "s") == 0){
+
+      strcpy(equipes[indice].instituicao_origem, nova_equipe.instituicao_origem);
+
+      for (int i = 0; i < 3; i++) {
+
+        strcpy(equipes[indice].nome_integrantes[i], nova_equipe.nome_integrantes[i]);
+
+      }
+
+      printf("Equipe atualizada com sucesso!\n");
+
+    } else {
+
+        printf("Atualizacao cancelada.\n");
+
+      }
+
+      return;
+
   }
 
-  printf("Equipe %s cadastrada com sucesso!\n", equipe->nome_equipe);                 // confirma o cadastro da equipe
+  // inicializa o desempenho da nova equipe
+    for (int i = 0; i < 14; i++) {
+        nova_equipe.problemas[i].qnt_submissoes = 0;
+        nova_equipe.problemas[i].minutos = 0;
+        nova_equipe.problemas[i].resolvidos = 0;
+    }
 
-}
+  // se esse trampo todo nao encontrou uma equipe de nome igual, entao ela e nova e sera cadastrada no vetor
+  strcpy(equipes[*quantidade].nome_equipe, nova_equipe.nome_equipe);
+
+  strcpy(equipes[*quantidade].instituicao_origem, nova_equipe.instituicao_origem);
+
+  for (int i = 0; i < 3; i++) {
+
+    strcpy(equipes[*quantidade].nome_integrantes[i], nova_equipe.nome_integrantes[i]);
+
+  }
+
+  (*quantidade)++;     // incrementa a quantidade de equipes cadastradas
+
+
+  printf("Equipe cadastrada com sucesso!\n");
+} 
+
+
+
 
 // Procura uma equipe pelo nome e devolve a posicao dela no vetor (ou -1 se nao existir)
 int buscar_equipe(EQUIPES equipes[], int quantidade, char nome[]){
@@ -140,25 +196,6 @@ int buscar_equipe(EQUIPES equipes[], int quantidade, char nome[]){
 
 }
 
-// Coloca zero em todos os campos de desempenho da equipe
-void inicializar_equipe(EQUIPES *equipe){
-
-  for(int i = 0; i < 14; i++){                 // percorre os 14 problemas (posicao 0 = A ate posicao 13 = N)
-    equipe->problemas[i].resolvidos = 0;       // 0 = sem problema ainda 
-    equipe->problemas[i].minutos = 0;          // nenhum tempo ainda
-    equipe->problemas[i].qnt_submissoes = 0;   // nenhuma submissao ainda
-  }
-
-}
-
-
-// ============================================================
-// submissao.c
-// ============================================================
-
-// Le da entrada os dados de uma submissao e chama o registro
-//
-
 // devolve 1 se o veredito for uma das 5 siglas permitidas, e 0 caso contrario
 int veredito_valido(char *veredito){
   return (strcmp(veredito, "AC") == 0 || strcmp(veredito, "PE") == 0 ||
@@ -166,7 +203,6 @@ int veredito_valido(char *veredito){
           strcmp(veredito, "WA") == 0);
 }
 
-//
 void realizar_submissao(EQUIPES equipes[], int quantidade) {
 
     char nome[51];     // armazenar o nome da equipe digitado
@@ -240,43 +276,73 @@ void registrar_submissao(EQUIPES *equipe, char problema, int tempo, char veredit
       equipe->problemas[posicao].resolvidos = 1;  // marca o problema como resolvido (1 = sim)
       equipe->problemas[posicao].minutos = tempo; // guarda o tempo em que foi resolvido
     }
-
 }
 
-void menu(EQUIPES equipes[], int *quantidade){
+void ordem_alfabetica( EQUIPES equipes[], int tamanho ){ //função que organiza um struct em ordem alfabética, baseado no nome da equipe
+    EQUIPES aux;
+    
+    for(int i = 0; i < tamanho - 1; i++){
+        int trocou = 0;
+        for(int j = 0; j < tamanho - i - 1; j++){
+                if(strcmp(equipes[j].nome_equipe, equipes[j+1].nome_equipe) > 0){
+                    aux = equipes[j];
+                    equipes[j] = equipes[j+1];
+                    equipes[j+1] = aux;
+                    trocou = 1;
+            }
+        }
+    if(trocou != 0) break;
+    }
+}
 
+
+void menu(EQUIPES equipes[], int *quantidade) {
     int opcao;
+    int c;
 
-    do{
+    do {
         printf("\n===== MARATONA DE PROGRAMACAO =====\n");
         printf("1. Cadastro de Equipe.\n");
         printf("2. Busca por Instituicao.\n");
         printf("3. Registro de Submissao.\n");
         printf("4. Apresentacao do Placar Atual.\n");
         printf("0. Sair.\n");
-
         printf("Escolha: ");
-        scanf("%d", &opcao);
-        getchar();
 
-        switch(opcao){
+        if (scanf("%d", &opcao) != 1) {
+            printf("Opcao invalida!\n");
+
+            while ((c = getchar()) != '\n' && c != EOF);
+
+            continue;
+        }
+
+        while ((c = getchar()) != '\n' && c != EOF);
+
+        switch (opcao) {
 
             case 1:
-                if(*quantidade < 5000){
-                    inicializar_equipe(&equipes[*quantidade]);
-                    cadastro(&equipes[*quantidade]);
-                    (*quantidade)++;
+                if (*quantidade < 5000) {
+                    cadastro_equipe(equipes, quantidade);
                 } else {
-                    printf("Limite de equipes atingido.\n");
+                    printf("Limite de 5000 equipes atingido.\n");
                 }
                 break;
 
-            case 2:
-                printf("Busca por instituicao.\n");
+            case 2: 
+//***********************************************************************************
+            //CASO PROVISÓRIO!!!
+            //!!!WIP!!!
+                
+                ordem_alfabetica(equipes, 2);
+                printf("\n");
+                for(int j = 0; j < 4; j++){ //impressão dos nomes
+                    printf("%s\n", equipes[j].nome_equipe);
+                }
                 break;
 
             case 3:
-                if(*quantidade == 0){
+                if (*quantidade == 0) {
                     printf("Nenhuma equipe cadastrada!\n");
                 } else {
                     realizar_submissao(equipes, *quantidade);
@@ -284,30 +350,29 @@ void menu(EQUIPES equipes[], int *quantidade){
                 break;
 
             case 4:
-                printf("Apresentacao do placar.\n");
+                printf("Apresentacao do placar ainda nao implementada.\n");
                 break;
 
             case 0:
-                printf("Encerrando.\n");
+                printf("Encerrando o programa...\n");
                 break;
 
             default:
-                printf("Opcao invalida!\n");
+                printf("Opcao invalida! Escolha uma opcao do menu.\n");
                 break;
         }
 
-    } while(opcao != 0);
+    } while (opcao != 0);
 }
 
-// ============================================================
-// main.c
-// ============================================================
+
 
 int main(){
-    EQUIPES equipes[5000];  // vetor com ate 5000 equipes
+  EQUIPES equipes[5000];  // vetor com ate 5000 equipes
     int quantidade = 0;     // quantas equipes ja foram cadastradas
-    
+
     menu(equipes, &quantidade);
+    
 
     return 0;
 }
